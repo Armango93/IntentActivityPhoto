@@ -1,5 +1,6 @@
 package com.example.intentavtivityphoto;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -10,6 +11,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -165,6 +168,37 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(takePictureIntent, actionCode);
     }
 
+    private void dispatchTakePicNewVers(int actionCode){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE }, 0);
+        }
+
+            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            if(takePictureIntent.resolveActivity(getPackageManager()) != null){
+                switch(actionCode) {
+                    case ACTION_TAKE_PHOTO_B:
+                        File f = null;
+
+                        try {
+                            f = setUpPhotoFile();
+                            mCurrentPhotoPath = f.getAbsolutePath();
+                            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(f));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            f = null;
+                            mCurrentPhotoPath = null;
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+
+                startActivityForResult(takePictureIntent, actionCode);
+
+        }
+    }
+
     private void dispatchTakeVideoIntent() {
         Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
         startActivityForResult(takeVideoIntent, ACTION_TAKE_VIDEO);
@@ -201,7 +235,13 @@ public class MainActivity extends AppCompatActivity {
             new Button.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    dispatchTakePictureIntent(ACTION_TAKE_PHOTO_B);
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        dispatchTakePicNewVers(ACTION_TAKE_PHOTO_B);
+                    } else {
+                        dispatchTakePictureIntent(ACTION_TAKE_PHOTO_B);
+                    }
+
                 }
             };
 
